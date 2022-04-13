@@ -4,6 +4,17 @@ const app = express();
 const mongojs = require("mongojs");
 const db = mongojs("travel", ["record"]);
 
+const bodyParser= require("body-parser");
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+const {
+     body,
+     param,
+     validationResult
+} = require("express-validator");
+
 //let's query records from database with sorting, filter and paging features
 app.get("/api/travel-records", function(req, res){
 
@@ -34,6 +45,29 @@ app.get("/api/travel-records", function(req, res){
                     }
                });
           }
+     });
+});
+
+//ok, let's try inserting new records to database with some validations
+app.post("/api/travel-records", [
+     body("name").not().isEmpty(),
+     body("from").not().isEmpty(),
+     body("to").not().isEmpty(),
+], function(req, res){
+     const errors = validationResult(req);
+     if(!errors.isEmpty()){
+          return res.status(400).json({ errors: errors.array() });
+     }
+     db.records.insert(req.body, function(err, data){
+          if(err){
+               return res.status(500);
+          }
+          const _id = data._id;
+          res.append("Location", "/api/travel-records/" + _id);
+          return res.status(201).json({
+               meta: {_id},
+               data
+          });
      });
 });
 
