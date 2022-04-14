@@ -14,6 +14,7 @@ const {
      param,
      validationResult
 } = require("express-validator");
+const { response } = require("har-validator");
 
 //let's query records from database with sorting, filter and paging features
 app.get("/api/travel-records", function(req, res){
@@ -71,6 +72,7 @@ app.post("/api/travel-records", [
      });
 });
 
+
 //records editing functions
 
 //update datas with put method
@@ -107,6 +109,34 @@ app.put("/api/travel-records/:id", [
                          });
                     });
                }
+          });
+});
+
+//let's update only parts of data with patch method
+app.patch("/api/travel-records/:id", function(req, res) {
+     const _id = req.params.id;
+
+     db.records.count({
+          _id: mongojs.ObjectId(_id)
+     }, function(err, count){
+          if(count){
+               db.records.update(
+                    { _id: mongojs.ObjectId(_id) },
+                    { $set: req.body },
+                    { multi: false },
+                    function(err, data){
+                         db.records.find({
+                              _id : mongojs.ObjectId(_id)
+                         }, function(err, data){
+                              return res.status(200).json({
+                                   meta: { _id }, data
+                              });
+                         });
+                    }
+               )
+          } else {
+               return res.sendStatus(404);
+          }
      });
 });
 
