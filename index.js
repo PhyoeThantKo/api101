@@ -144,7 +144,7 @@ app.patch("/api/travel-records/:id", function(req, res) {
 });
 
 //deleting datas from database
-app.delete("/api/travel-records/:id", function(req, res){
+app.delete("/api/travel-records/:id", auth, onlyAdmin, function(req, res){
      const _id = req.params.id;
 
      db.records.count({
@@ -169,7 +169,7 @@ app.delete("/api/travel-records/:id", function(req, res){
 const users = [
      { username: "Alice", password: "password", role: "admin" },
      { username: "Bob", password: "password", role: "user" },
-     ];
+];
 
 //user login
 app.post("/api/login", function(req, res) {
@@ -203,6 +203,16 @@ function auth(req, res, next) {
           if(err) return res.sendStatus(401);
           else next();
      });
+}
+
+//authorization
+function onlyAdmin (req, res, next){
+      const[type, token] = req.headers["authorization"].split(" ");
+
+      jwt.verify(token, secret, function(err, user){
+           if(user.role === "admin") next();
+           else return res.sendStatus(403);
+      });
 }
 
 //server
