@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 const mongojs = require("mongojs");
-const db = mongojs("travel", ["record"]);
+const db = mongojs("travel", ["records"]);
 
 const bodyParser= require("body-parser");
 
@@ -68,6 +68,45 @@ app.post("/api/travel-records", [
                meta: {_id},
                data
           });
+     });
+});
+
+//records editing functions
+
+//update datas with put method
+app.put("/api/travel-records/:id", [
+          param("id").isMongoId(),
+     ], function(req, res) {
+          const _id = req.params.id;
+          const errors = validationResult(req);
+
+          if (!errors.isEmpty()) {
+               return res.status(400).json({ errors: errors.array() });
+          }
+
+          db.records.count({
+               _id: mongojs.ObjectId(_id)
+          }, function(err, count) {
+               if(count) {
+                    const record = {
+                         _id: mongojs.ObjectId(_id),
+                         ...req.body
+                    };
+
+                    db.records.save(record, function(err, data) {
+                                   return res.status(200).json({
+                                        meta: { _id },
+                                        data
+                                   });
+                               });
+               } else{
+                    db.records.save(req.body, function(err, data) {
+                         return res.status(201).json({
+                              meta: { _id: data._id },
+                              data
+                         });
+                    });
+               }
      });
 });
 
