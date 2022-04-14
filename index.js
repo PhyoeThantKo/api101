@@ -16,8 +16,11 @@ const {
 } = require("express-validator");
 const { response } = require("har-validator");
 
+const jwt = require("jsonwebtoken");
+const secret = "horse battery staple";
+
 //let's query records from database with sorting, filter and paging features
-app.get("/api/travel-records", function(req, res){
+app.get("/api/travel-records", auth, function(req, res){
 
      const options = req.query;
 
@@ -158,6 +161,49 @@ app.delete("/api/travel-records/:id", function(req, res){
           }
      });
 });
+
+
+//autorization with json web token
+
+//randon users
+const users = [
+     { username: "Alice", password: "password", role: "admin" },
+     { username: "Bob", password: "password", role: "user" },
+     ];
+
+//user login
+app.post("/api/login", function(req, res) {
+
+     const { username, password } = req.body;
+
+     const user = users.find(function(u) {
+          return u.username === username && u.password === password;
+     });
+     if(auth) {
+          jwt.sign(user, secret, {
+               expiresIn: "1h"
+          }, function(err, token) {
+               return res.status(200).json({ token });
+          });
+     } else {
+          return res.sendStatus(401);
+     }
+});
+
+
+function auth(req, res, next) {
+     const authHeader = req.headers["authorization"];
+     if(!authHeader) return res.sendStatus(401);
+
+     const [ type, token ] = authHeader.split(" ");
+
+     if(type !== "Bearer") return res.sendStatus(401);
+
+     jwt.verify(token, secret, function(err, data) {
+          if(err) return res.sendStatus(401);
+          else next();
+     });
+}
 
 //server
 app.listen(8000, function(){
