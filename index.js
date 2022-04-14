@@ -140,6 +140,25 @@ app.patch("/api/travel-records/:id", function(req, res) {
      });
 });
 
+//deleting datas from database
+app.delete("/api/travel-records/:id", function(req, res){
+     const _id = req.params.id;
+
+     db.records.count({
+          _id: mongojs.ObjectId(_id)
+     }, function(err, count){
+          if(count){
+               db.records.remove({
+                    _id : mongojs.ObjectId(_id)
+               }, function(err, data){
+                    return res.sendStatus(204);
+               });
+          }else {
+               return res.sendStatus(404);
+          }
+     });
+});
+
 //server
 app.listen(8000, function(){
      console.log("Server running at port 8000");
